@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 
 const TIME_INTERVAL = 1000;
 const WORK_CYCLES = 4;
@@ -11,568 +11,493 @@ let TEMP_WORK_TIME = WORK_TIME;
 let TEMP_BREAK_TIME = BREAK_TIME;
 let TEMP_LONG_BREAK_TIME = LONG_BREAK_TIME;
 
-class Timer extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      workCycles: WORK_CYCLES,
+const Timer = (props) => {
+  const [workCycles, setWorkCycles] = useState(WORK_CYCLES);
+  const [isWorkTime, setIsWorkTime] = useState(true);
+  const [isLongBreakTime, setIsLongBreakTime] = useState(false);
+  const [isPaused, setIsPaused] = useState(true);
+  const [workSeconds, setWorkSeconds] = useState(0);
+  const [workMinutes, setWorkMinutes] = useState(WORK_TIME);
+  const [breakSeconds, setBreakSeconds] = useState(0);
+  const [breakMinutes, setBreakMinutes] = useState(BREAK_TIME);
+  const [longBreakSeconds, setLongBreakSeconds] = useState(0);
+  const [longBreakMinutes, setLongBreakMinutes] = useState(LONG_BREAK_TIME);
 
-      isWorkTime: true,
-      isLongBreakTime: false,
-      isPaused: true,
-
-      workSeconds: 0,
-      workMinutes: WORK_TIME,
-
-      breakSeconds: 0,
-      breakMinutes: BREAK_TIME,
-
-      longBreakSeconds: 0,
-      longBreakMinutes: LONG_BREAK_TIME,
-    };
-
-    this.startLongBreakTimer = this.startLongBreakTimer.bind(this);
-    this.startBreakAndPause = this.startBreakAndPause.bind(this);
-    this.startWorkAndPause = this.startWorkAndPause.bind(this);
-    this.startWork = this.startWork.bind(this);
-    this.startBreak = this.startBreak.bind(this);
-    this.startWorkTimer = this.startWorkTimer.bind(this);
-    this.startWorkTimer = this.startWorkTimer.bind(this);
-    this.pauseTimer = this.pauseTimer.bind(this);
-    this.resetTimer = this.resetTimer.bind(this);
-    this.resetApp = this.resetApp.bind(this);
-    this.updateWorkMinutes = this.updateWorkMinutes.bind(this);
-    this.updateWorkCycles = this.updateWorkCycles.bind(this);
-    this.updateBreakMinutes = this.updateBreakMinutes.bind(this);
-    this.updateLongBreakMinutes = this.updateLongBreakMinutes.bind(this);
-  }
-
-  updateWorkMinutes(min) {
+  const updateWorkMinutes = (min) => {
     TEMP_WORK_TIME = min.target.value;
-    this.setState({
-      workMinutes: TEMP_WORK_TIME,
-      workSeconds: 0,
-    });
-  }
 
-  updateBreakMinutes(min) {
+    setWorkMinutes(TEMP_WORK_TIME);
+    setWorkSeconds(0);
+  };
+
+  const updateBreakMinutes = (min) => {
     TEMP_BREAK_TIME = min.target.value;
-    this.setState({
-      breakMinutes: TEMP_BREAK_TIME,
-      breakSeconds: 0,
-    });
-  }
 
-  updateLongBreakMinutes(min) {
+    setBreakMinutes(TEMP_BREAK_TIME);
+    setBreakSeconds(0);
+  };
+
+  const updateLongBreakMinutes = (min) => {
     TEMP_LONG_BREAK_TIME = min.target.value;
-    this.setState({
-      longBreakMinutes: TEMP_LONG_BREAK_TIME,
-      longBreakSeconds: 0,
-    });
-  }
 
-  updateWorkCycles(cycles) {
+    setLongBreakMinutes(TEMP_LONG_BREAK_TIME);
+    setLongBreakSeconds(0);
+  };
+
+  const updateWorkCycles = (cycles) => {
     TEMP_WORK_CYCLES = cycles.target.value;
-    this.setState({
-      workCycles: TEMP_WORK_CYCLES,
-    });
-  }
 
-  static getDerivedStateFromProps() {
-    return 1;
-  }
+    setWorkCycles(TEMP_WORK_CYCLES);
+  };
 
-  resetTimer() {
-    this.setState({
-      isPaused: true,
+  const resetTimer = () => {
+    setIsPaused(true);
+    setWorkCycles(TEMP_WORK_CYCLES);
 
-      workCycles: TEMP_WORK_CYCLES,
+    setWorkSeconds(0);
+    setWorkMinutes(TEMP_WORK_TIME);
 
-      workSeconds: 0,
-      workMinutes: TEMP_WORK_TIME,
+    setBreakSeconds(0);
+    setBreakMinutes(TEMP_BREAK_TIME);
 
-      breakSeconds: 0,
-      breakMinutes: TEMP_BREAK_TIME,
+    setLongBreakSeconds(0);
+    setLongBreakMinutes(TEMP_LONG_BREAK_TIME);
 
-      longBreakSeconds: 0,
-      longBreakMinutes: TEMP_LONG_BREAK_TIME,
-    });
+    clearAllTimers();
+  };
 
-    this.clearAllTimers();
-  }
-
-  resetApp() {
+  const resetApp = () => {
     TEMP_WORK_CYCLES = WORK_CYCLES;
     TEMP_WORK_TIME = WORK_TIME;
     TEMP_BREAK_TIME = BREAK_TIME;
     TEMP_LONG_BREAK_TIME = LONG_BREAK_TIME;
-    
-    this.setState({
-      workCycles: WORK_CYCLES,
 
-      isWorkTime: true,
-      isLongBreakTime: false,
-      isPaused: true,
+    setWorkCycles(TEMP_WORK_CYCLES);
+    setIsWorkTime(true);
+    setIsLongBreakTime(false);
+    setIsPaused(true);
 
-      workSeconds: 0,
-      workMinutes: WORK_TIME,
+    setWorkSeconds(0);
+    setWorkMinutes(WORK_TIME);
 
-      breakSeconds: 0,
-      breakMinutes: BREAK_TIME,
+    setBreakSeconds(0);
+    setBreakMinutes(BREAK_TIME);
 
-      longBreakSeconds: 0,
-      longBreakMinutes: LONG_BREAK_TIME,
-    });
+    setLongBreakSeconds(0);
+    setLongBreakMinutes(LONG_BREAK_TIME);
 
-    this.clearAllTimers();
-  }
+    clearAllTimers();
+  };
 
-  startWorkTimer() {
-    clearInterval(this.workTimerInterval);
-    this.unpauseTimer();
-    this.workTimerInterval = setInterval(() => {
-      if (!this.state.isPaused) {
+  const startWorkTimer = () => {
+    clearInterval(workTimerInterval);
+    unpauseTimer();
+    workTimerInterval = setInterval(() => {
+      if (!isPaused) {
         // When there are no seconds left
         // but as long as there are minutes left
-        if (this.state.workMinutes > 0 && this.state.workSeconds === 0) {
-          this.resetWorkSeconds();
-          this.decrementWorkMinutes();
+        if (workMinutes > 0 && workSeconds === 0) {
+          resetWorkSeconds();
+          decrementWorkMinutes();
 
           // As long as there are seconds and minutes left
-        } else if (this.state.workMinutes >= 0 && this.state.workSeconds > 0) {
-          this.decrementWorkSeconds();
+        } else if (workMinutes >= 0 && workSeconds > 0) {
+          decrementWorkSeconds();
 
           // When the timer ends, switch to break timer
-        } else if (this.state.workCycles > 1) {
-          this.startBreak();
+        } else if (workCycles > 1) {
+          startBreak();
         } else {
-          this.startLongBreak();
+          startLongBreak();
         }
       }
     }, TIME_INTERVAL);
-  }
+  };
 
-  startBreakTimer() {
-    clearInterval(this.breakTimerInterval);
-    this.unpauseTimer();
-    this.breakTimerInterval = setInterval(() => {
-      if (!this.state.isPaused) {
+  const startBreakTimer = () => {
+    clearInterval(breakTimerInterval);
+    unpauseTimer();
+    breakTimerInterval = setInterval(() => {
+      if (!isPaused) {
         // When there are no seconds left
         // but as long as there are minutes left
-        if (this.state.breakMinutes > 0 && this.state.breakSeconds === 0) {
-          this.resetBreakSeconds();
-          this.decrementBreakMinutes();
+        if (breakMinutes > 0 && breakSeconds === 0) {
+          resetBreakSeconds();
+          decrementBreakMinutes();
 
           // As long as there are seconds and minutes left
-        } else if (
-          this.state.breakMinutes >= 0 &&
-          this.state.breakSeconds > 0
-        ) {
-          this.decrementBreakSeconds();
+        } else if (breakMinutes >= 0 && breakSeconds > 0) {
+          decrementBreakSeconds();
 
           // When the timer ends, switch to work timer
         } else {
-          this.startWork();
+          startWork();
         }
       }
     }, TIME_INTERVAL);
-  }
+  };
 
-  startLongBreakTimer() {
-    clearInterval(this.longBreakTimeInterval);
-    this.unpauseTimer();
-    this.longBreakTimeInterval = setInterval(() => {
-      if (!this.state.isPaused) {
+  const startLongBreakTimer = () => {
+    clearInterval(longBreakTimeInterval);
+    unpauseTimer();
+    longBreakTimeInterval = setInterval(() => {
+      if (!isPaused) {
         // When there are no seconds left
         // but as long as there are minutes left
-        if (
-          this.state.longBreakMinutes > 0 &&
-          this.state.longBreakSeconds === 0
-        ) {
-          this.resetLongBreakSeconds();
-          this.decrementLongBreakMinutes();
+        if (longBreakMinutes > 0 && longBreakSeconds === 0) {
+          resetLongBreakSeconds();
+          decrementLongBreakMinutes();
 
           // As long as there are seconds and minutes left
-        } else if (
-          this.state.longBreakMinutes >= 0 &&
-          this.state.longBreakSeconds > 0
-        ) {
-          this.decrementLongBreakSeconds();
+        } else if (longBreakMinutes >= 0 && longBreakSeconds > 0) {
+          decrementLongBreakSeconds();
 
           // When the timer ends, switch to work timer
         } else {
-          this.resetApp();
-          this.startWork();
+          resetApp();
+          startWork();
         }
       }
     }, TIME_INTERVAL);
-  }
+  };
 
-  decrementWorkCycles() {
-    this.setState({
-      workCycles: this.state.workCycles - 1,
-    });
-  }
+  const decrementWorkCycles = () => {
+    setWorkCycles(workCycles - 1);
+  };
 
-  unpauseTimer() {
-    this.setState({
-      isPaused: false,
-    });
-  }
+  const unpauseTimer = () => {
+    setIsPaused(false);
+  };
 
-  pauseTimer() {
-    this.setState({
-      isPaused: true,
-    });
+  const pauseTimer = () => {
+    setIsPaused(true);
+    clearAllTimers();
+  };
 
-    this.clearAllTimers();
-  }
+  const clearAllTimers = () => {
+    clearInterval(longBreakTimeInterval);
+    clearInterval(breakTimerInterval);
+    clearInterval(workTimerInterval);
+  };
 
-  clearAllTimers() {
-    clearInterval(this.longBreakTimeInterval);
-    clearInterval(this.breakTimerInterval);
-    clearInterval(this.workTimerInterval);
-  }
-
-  resetWorkSeconds() {
-    if (this.state.workSeconds === 0) {
-      this.setState({
-        workSeconds: 59,
-      });
+  const resetWorkSeconds = () => {
+    if (workSeconds === 0) {
+      setWorkSeconds(59);
     }
-  }
+  };
 
-  resetBreakSeconds() {
-    if (this.state.breakSeconds === 0) {
-      this.setState({
-        breakSeconds: 59,
-      });
+  const resetBreakSeconds = () => {
+    if (breakSeconds === 0) {
+      setBreakSeconds(59);
     }
-  }
+  };
 
-  resetLongBreakSeconds() {
-    if (this.state.breakSeconds === 0) {
-      this.setState({
-        longBreakSeconds: 59,
-      });
+  const resetLongBreakSeconds = () => {
+    if (breakSeconds === 0) {
+      setLongBreakSeconds(59);
     }
-  }
+  };
 
-  decrementWorkSeconds() {
-    this.setState({
-      workSeconds: this.state.workSeconds - 1,
-    });
-  }
+  const decrementWorkSeconds = () => {
+    setWorkSeconds(workSeconds - 1);
+  };
 
-  decrementLongBreakSeconds() {
-    this.setState({
-      longBreakSeconds: this.state.longBreakSeconds - 1,
-    });
-  }
+  const decrementLongBreakSeconds = () => {
+    setLongBreakSeconds(longBreakSeconds - 1);
+  };
 
-  decrementBreakSeconds() {
-    this.setState({
-      breakSeconds: this.state.breakSeconds - 1,
-    });
-  }
+  const decrementBreakSeconds = () => {
+    setBreakSeconds(breakSeconds - 1);
+  };
 
-  decrementWorkMinutes() {
-    this.setState({
-      workMinutes: this.state.workMinutes - 1,
-    });
-  }
+  const decrementWorkMinutes = () => {
+    setWorkMinutes(workMinutes - 1);
+  };
 
-  decrementBreakMinutes() {
-    this.setState({
-      breakMinutes: this.state.breakMinutes - 1,
-    });
-  }
+  const decrementBreakMinutes = () => {
+    setBreakMinutes(breakMinutes - 1);
+  };
 
-  decrementLongBreakMinutes() {
-    this.setState({
-      longBreakMinutes: this.state.longBreakMinutes - 1,
-    });
-  }
+  const decrementLongBreakMinutes = () => {
+    setLongBreakMinutes(longBreakMinutes - 1);
+  };
 
-  adjustDigitsFormat(num) {
+  const adjustDigitsFormat = (num) => {
     let format = num > 9 ? num : "0" + num;
     return format;
+  };
+
+  const startWork = () => {
+    setIsWorkTime(true);
+    setIsLongBreakTime(false);
+    setIsPaused(true);
+
+    setWorkSeconds(0);
+    setWorkMinutes(WORK_TIME);
+
+    setBreakSeconds(0);
+    setBreakMinutes(BREAK_TIME);
+
+    setLongBreakSeconds(0);
+    setLongBreakMinutes(LONG_BREAK_TIME);
+
+    clearAllTimers();
+    startWorkTimer();
+  };
+
+  const startBreak = () => {
+    decrementWorkCycles();
+
+    setIsWorkTime(false);
+    setIsLongBreakTime(false);
+    setIsPaused(true);
+
+    setWorkSeconds(0);
+    setWorkMinutes(WORK_TIME);
+
+    setBreakSeconds(0);
+    setBreakMinutes(BREAK_TIME);
+
+    setLongBreakSeconds(0);
+    setLongBreakMinutes(LONG_BREAK_TIME);
+
+    clearAllTimers();
+    startBreakTimer();
+  };
+
+  const startLongBreak = () => {
+    setIsWorkTime(false);
+    setIsLongBreakTime(true);
+    setIsPaused(true);
+
+    setWorkSeconds(0);
+    setWorkMinutes(WORK_TIME);
+
+    setBreakSeconds(0);
+    setBreakMinutes(BREAK_TIME);
+
+    setLongBreakSeconds(0);
+    setLongBreakMinutes(LONG_BREAK_TIME);
+
+    setWorkCycles(WORK_CYCLES); // reset the number of work cycles
+
+    clearAllTimers();
+    startLongBreakTimer();
+  };
+
+  const startLongBreakAndPause = () => {
+    resetTimer();
+
+    setIsWorkTime(false);
+    setIsLongBreakTime(true);
+  };
+
+  const startWorkAndPause = () => {
+    resetTimer();
+
+    setIsWorkTime(true);
+    setIsLongBreakTime(false);
+    clearAllTimers();
+  };
+
+  const startBreakAndPause = () => {
+    resetTimer();
+
+    setIsWorkTime(false);
+    clearAllTimers();
+  };
+
+  let minutesToDisplay;
+  let secondsToDisplay;
+  if (!isLongBreakTime && isWorkTime) {
+    minutesToDisplay = adjustDigitsFormat(workMinutes);
+    secondsToDisplay = this.adjustDigitsFormat(workSeconds);
+  } else if (!isLongBreakTime && !isWorkTime) {
+    minutesToDisplay = this.adjustDigitsFormat(breakMinutes);
+    secondsToDisplay = this.adjustDigitsFormat(breakSeconds);
+  } else {
+    minutesToDisplay = this.adjustDigitsFormat(longBreakMinutes);
+    secondsToDisplay = this.adjustDigitsFormat(longBreakSeconds);
   }
 
-  startWork() {
-    this.setState({
-      isWorkTime: true,
-      isLongBreakTime: false,
-      isPaused: true,
-
-      workSeconds: 0,
-      workMinutes: WORK_TIME,
-
-      breakSeconds: 0,
-      breakMinutes: BREAK_TIME,
-
-      longBreakSeconds: 0,
-      longBreakMinutes: LONG_BREAK_TIME,
-    });
-
-    this.clearAllTimers();
-    this.startWorkTimer();
+  let startButton;
+  if (isPaused) {
+    startButton = (
+      <button
+        onClick={() => {
+          if (!isLongBreakTime && isWorkTime) {
+            this.startWorkTimer();
+          } else if (!isLongBreakTime && !isWorkTime) {
+            this.startBreakTimer();
+          } else {
+            this.startLongBreakTimer();
+          }
+        }}
+      >
+        Start
+      </button>
+    );
+  } else {
+    startButton = <button onClick={this.pauseTimer}>Pause</button>;
   }
 
-  startBreak() {
-    this.decrementWorkCycles();
-
-    this.setState({
-      isWorkTime: false,
-      isLongBreakTime: false,
-      isPaused: true,
-
-      workSeconds: 0,
-      workMinutes: WORK_TIME,
-
-      breakSeconds: 0,
-      breakMinutes: BREAK_TIME,
-
-      longBreakSeconds: 0,
-      longBreakMinutes: LONG_BREAK_TIME,
-    });
-
-    this.clearAllTimers();
-    this.startBreakTimer();
+  let workButton;
+  if (!isLongBreakTime && isWorkTime) {
+    workButton = (
+      <button
+        onClick={() => {
+          this.startBreakAndPause();
+        }}
+      >
+        Short Break
+      </button>
+    );
+  } else if (!isLongBreakTime && !isWorkTime) {
+    workButton = (
+      <button
+        onClick={() => {
+          this.startWorkAndPause();
+        }}
+      >
+        Work
+      </button>
+    );
+  } else {
+    workButton = (
+      <button
+        onClick={() => {
+          this.startWorkAndPause();
+        }}
+      >
+        Work
+      </button>
+    );
   }
 
-  startLongBreak() {
-    this.setState({
-      isWorkTime: false,
-      isLongBreakTime: true,
-      isPaused: true,
-
-      workSeconds: 0,
-      workMinutes: WORK_TIME,
-
-      breakSeconds: 0,
-      breakMinutes: BREAK_TIME,
-
-      longBreakSeconds: 0,
-      longBreakMinutes: LONG_BREAK_TIME,
-
-      workCycles: WORK_CYCLES, // reset the number of work cycles
-    });
-
-    this.clearAllTimers();
-    this.startLongBreakTimer();
+  let displayColour;
+  if (!isLongBreakTime && isWorkTime) {
+    displayColour = "#9c1c00";
+  } else if (!isLongBreakTime && !isWorkTime) {
+    displayColour = "#039054";
+  } else {
+    displayColour = "#003eb3";
   }
 
-  startLongBreakAndPause() {
-    this.resetTimer();
-    this.setState({
-      isWorkTime: false,
-      isLongBreakTime: true,
-    });
-  }
+  let isNotPaused = !isPaused;
 
-  startWorkAndPause() {
-    this.resetTimer();
-    this.setState({
-      isWorkTime: true,
-      isLongBreakTime: false,
-    });
-    this.clearAllTimers();
-  }
-
-  startBreakAndPause() {
-    this.resetTimer();
-    this.setState({
-      isWorkTime: false,
-    });
-    this.clearAllTimers();
-  }
-
-  render() {
-    let minutesToDisplay;
-    let secondsToDisplay;
-    if (!this.state.isLongBreakTime && this.state.isWorkTime) {
-      minutesToDisplay = this.adjustDigitsFormat(this.state.workMinutes);
-      secondsToDisplay = this.adjustDigitsFormat(this.state.workSeconds);
-    } else if (!this.state.isLongBreakTime && !this.state.isWorkTime) {
-      minutesToDisplay = this.adjustDigitsFormat(this.state.breakMinutes);
-      secondsToDisplay = this.adjustDigitsFormat(this.state.breakSeconds);
-    } else {
-      minutesToDisplay = this.adjustDigitsFormat(this.state.longBreakMinutes);
-      secondsToDisplay = this.adjustDigitsFormat(this.state.longBreakSeconds);
-    }
-
-    let startButton;
-    if (this.state.isPaused) {
-      startButton = (
-        <button
-          onClick={() => {
-            if (!this.state.isLongBreakTime && this.state.isWorkTime) {
-              this.startWorkTimer();
-            } else if (!this.state.isLongBreakTime && !this.state.isWorkTime) {
-              this.startBreakTimer();
-            } else {
-              this.startLongBreakTimer();
-            }
-          }}
-        >
-          Start
-        </button>
-      );
-    } else {
-      startButton = <button onClick={this.pauseTimer}>Pause</button>;
-    }
-
-    let workButton;
-    if (!this.state.isLongBreakTime && this.state.isWorkTime) {
-      workButton = (
-        <button
-          onClick={() => {
-            this.startBreakAndPause();
-          }}
-        >
-          Short Break
-        </button>
-      );
-    } else if (!this.state.isLongBreakTime && !this.state.isWorkTime) {
-      workButton = (
-        <button
-          onClick={() => {
-            this.startWorkAndPause();
-          }}
-        >
-          Work
-        </button>
-      );
-    } else {
-      workButton = (
-        <button
-          onClick={() => {
-            this.startWorkAndPause();
-          }}
-        >
-          Work
-        </button>
-      );
-    }
-
-    let displayColour;
-    if (!this.state.isLongBreakTime && this.state.isWorkTime) {
-      displayColour = "#9c1c00";
-    } else if (!this.state.isLongBreakTime && !this.state.isWorkTime) {
-      displayColour = "#039054";
-    } else {
-      displayColour = "#003eb3";
-    }
-
-    let isNotPaused = !this.state.isPaused;
-
-    return (
+  return (
+    <div>
+      <div></div>
       <div>
-        <div></div>
-        <div>
-          <h1 key={this.props.workMinutes} style={{ color: displayColour }}>
-            {minutesToDisplay}:{secondsToDisplay}
+        <h1 key={this.props.workMinutes} style={{ color: displayColour }}>
+          {minutesToDisplay}:{secondsToDisplay}
+        </h1>
+      </div>
+      <div>
+        {startButton}
+
+        <button onClick={this.resetTimer}>Reset Time</button>
+
+        {workButton}
+
+        <button
+          onClick={() => {
+            this.startLongBreakAndPause();
+          }}
+        >
+          Long Break
+        </button>
+      </div>
+      <div>
+        <button onClick={this.resetApp}>Reset Pomodoro</button>
+      </div>
+
+      <div>
+        {!isLongBreakTime ? (
+          <h1>
+            {workCycles} / {TEMP_WORK_CYCLES}
           </h1>
-        </div>
-        <div>
-          {startButton}
+        ) : (
+          <h1>Time for a long break!</h1>
+        )}
+      </div>
 
-          <button onClick={this.resetTimer}>Reset Time</button>
+      <div>
+        <h2>Settings:</h2>
+      </div>
 
-          {workButton}
-
-          <button
-            onClick={() => {
-              this.startLongBreakAndPause();
-            }}
-          >
-            Long Break
-          </button>
-        </div>
-        <div>
-          <button onClick={this.resetApp}>Reset Pomodoro</button>
-        </div>
-
-        <div>
-          {!this.state.isLongBreakTime ? (
-            <h1>
-              {this.state.workCycles} / {TEMP_WORK_CYCLES}
-            </h1>
-          ) : (
-            <h1>Time for a long break!</h1>
-          )}
-        </div>
-
-        <div>
-          <h2>Settings:</h2>
-        </div>
-
+      <div>
         <div>
           <div>
             <div>
-              <div>
-                <form>
-                  <label>Work interval duration: </label>
-                  <select
-                    disabled={isNotPaused}
-                    onChange={this.updateWorkMinutes}
-                  >
-                    <option defaultValue="selected" value="25">25 minutes</option>
-                    <option value="30">30 minutes</option>
-                    <option value="35">35 minutes</option>
-                    <option value="40">40 minutes</option>
-                    <option value="45">45 minutes</option>
-                    <option value="50">50 minutes</option>
-                    <option value="55">55 minutes</option>
-                    <option value="60">60 minutes</option>
-                    <option value="90">90 minutes</option>
-                    <option value="120">120 minutes</option>
-                  </select>
-                </form>
-              </div>
-              <div>
-                <form>
-                  <label>Short break duration: </label>
-                  <select
-                    onChange={this.updateBreakMinutes}
-                    disabled={isNotPaused}
-                  >
-                    <option defaultValue="selected" value="5">5 minutes</option>
-                    <option value="10">10 minutes</option>
-                    <option value="15">15 minutes</option>
-                  </select>
-                </form>
-              </div>
-
-              <div>
-                <label>Long break duration: </label>
+              <form>
+                <label>Work interval duration: </label>
                 <select
-                  onChange={this.updateLongBreakMinutes}
+                  disabled={isNotPaused}
+                  onChange={this.updateWorkMinutes}
+                >
+                  <option defaultValue="selected" value="25">
+                    25 minutes
+                  </option>
+                  <option value="30">30 minutes</option>
+                  <option value="35">35 minutes</option>
+                  <option value="40">40 minutes</option>
+                  <option value="45">45 minutes</option>
+                  <option value="50">50 minutes</option>
+                  <option value="55">55 minutes</option>
+                  <option value="60">60 minutes</option>
+                  <option value="90">90 minutes</option>
+                  <option value="120">120 minutes</option>
+                </select>
+              </form>
+            </div>
+            <div>
+              <form>
+                <label>Short break duration: </label>
+                <select
+                  onChange={this.updateBreakMinutes}
                   disabled={isNotPaused}
                 >
-                  <option defaultValue="selected" value="15">15 minutes</option>
-                  <option value="20">20 minutes</option>
-                  <option value="25">25 minutes</option>
-                  <option value="30">30 minutes</option>
+                  <option defaultValue="selected" value="5">
+                    5 minutes
+                  </option>
+                  <option value="10">10 minutes</option>
+                  <option value="15">15 minutes</option>
                 </select>
-              </div>
+              </form>
+            </div>
 
-              <div>
-                <label>Long break after: </label>
-                <select onChange={this.updateWorkCycles} disabled={isNotPaused}>
-                  <option defaultValue="selected" value="4">4 pomodoros</option>
-                  <option value="3">3 pomodoros</option>
-                  <option value="1">2 pomodoros</option>
-                  <option value="1">1 pomodoro</option>
-                </select>
-              </div>
+            <div>
+              <label>Long break duration: </label>
+              <select
+                onChange={this.updateLongBreakMinutes}
+                disabled={isNotPaused}
+              >
+                <option defaultValue="selected" value="15">
+                  15 minutes
+                </option>
+                <option value="20">20 minutes</option>
+                <option value="25">25 minutes</option>
+                <option value="30">30 minutes</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Long break after: </label>
+              <select onChange={this.updateWorkCycles} disabled={isNotPaused}>
+                <option defaultValue="selected" value="4">
+                  4 pomodoros
+                </option>
+                <option value="3">3 pomodoros</option>
+                <option value="1">2 pomodoros</option>
+                <option value="1">1 pomodoro</option>
+              </select>
             </div>
           </div>
         </div>
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 export default Timer;
